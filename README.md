@@ -30,7 +30,6 @@ Brain_tu/
 └── README.md
 ```
 
-`venv/` is not part of the repository and should be created locally after cloning.
 
 ## Requirements
 
