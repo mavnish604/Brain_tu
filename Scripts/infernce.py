@@ -13,7 +13,7 @@ from torchvision import models, transforms
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 MODELS_DIR = PROJECT_ROOT / "models"
-DATASET_ROOT = PROJECT_ROOT / "Brain_tu" / "Dataset"
+DATASET_ROOT = PROJECT_ROOT / "Dataset"
 CLASS_DIR = DATASET_ROOT / "BT-MRI Dataset" / "BT-MRI Dataset" / "Testing"
 DEFAULT_IMAGE_PATH = (
     DATASET_ROOT

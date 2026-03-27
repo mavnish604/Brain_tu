@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, DragEvent, useEffect, useState } from "react";
 
 type PredictionResult = {
   label: string;
@@ -33,9 +33,21 @@ export default function Home() {
   const [result, setResult] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  function updateSelectedFile(file: File | null) {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
     setSelectedFile(file);
     setResult(null);
     setError(null);
@@ -45,8 +57,27 @@ export default function Home() {
       return;
     }
 
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    updateSelectedFile(event.target.files?.[0] ?? null);
+  }
+
+  function handleDragOver(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setIsDragging(false);
+  }
+
+  function handleDrop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setIsDragging(false);
+    updateSelectedFile(event.dataTransfer.files?.[0] ?? null);
   }
 
   async function handleSubmit() {
@@ -97,15 +128,38 @@ export default function Home() {
             through the FastAPI backend in one clean workflow.
           </p>
           <div className="hero-badges">
-            <span>FastAPI backend</span>
+            <span>Drag and drop MRI scans</span>
             <span>Original + mobile model</span>
-            <span>MRI upload preview</span>
+            <span>Fast clinical-style summary</span>
+          </div>
+
+          <div className="hero-summary">
+            <p className="summary-label">Latest Screening Insight</p>
+            <h2>
+              {result
+                ? result.original_model.label === "No-tumor"
+                  ? "No tumor detected by primary model"
+                  : `${result.original_model.label} detected`
+                : "Ready when you are"}
+            </h2>
+            <p>
+              {result
+                ? result.models_agree
+                  ? "Both deployed models agree on the prediction, which is a good sign for consistency."
+                  : "The models disagree, so this scan should be reviewed with extra care."
+                : "Drop an MRI into the scan zone and the page will compare both model outputs instantly."}
+            </p>
           </div>
         </div>
 
         <div className="hero-panel">
           <div className="upload-card">
-            <label className="upload-zone">
+            <label
+              className={`upload-zone ${isDragging ? "upload-zone-active" : ""}`}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
               <input
                 accept="image/*"
                 className="hidden-input"
@@ -116,8 +170,8 @@ export default function Home() {
                 <img className="preview-image" src={previewUrl} alt="MRI preview" />
               ) : (
                 <div className="upload-placeholder">
-                  <strong>Select MRI image</strong>
-                  <span>JPEG or PNG from your local device</span>
+                  <strong>Drag and drop your MRI here</strong>
+                  <span>or click to browse from your device</span>
                 </div>
               )}
             </label>
@@ -145,29 +199,15 @@ export default function Home() {
       </section>
 
       <section className="results-grid">
-        <article className="status-card">
-          <p className="section-label">Backend Target</p>
-          <h2>{API_BASE_URL}</h2>
-          <p>
-            Make sure the FastAPI server is running before uploading an image.
-          </p>
-        </article>
-
         <article className="status-card accent-card">
-          <p className="section-label">Screening Summary</p>
+          <p className="section-label">System Status</p>
           <h2>
-            {result
-              ? result.original_model.label === "No-tumor"
-                ? "No tumor detected by primary model"
-                : `${result.original_model.label} detected`
-              : "Awaiting MRI upload"}
+            {selectedFile ? "Scan loaded and ready" : "Awaiting MRI upload"}
           </h2>
           <p>
             {result
-              ? result.models_agree
-                ? "Both models agree on the top prediction."
-                : "The two models disagree. Review with extra care."
-              : "Once you upload an MRI, the page will summarize the outcome here."}
+              ? `The backend processed ${result.filename} and returned both model predictions.`
+              : "Keep the FastAPI backend running on port 8000, then upload a scan to begin analysis."}
           </p>
         </article>
       </section>
