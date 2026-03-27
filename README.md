@@ -5,12 +5,12 @@ This repository contains a brain tumor MRI classification project built around a
 - training notebooks
 - a local inference script
 - a FastAPI backend
-- a Next.js frontend for MRI image upload and prediction
+- a Next.js frontend for MRI upload and prediction
 
 The backend compares two models on the same MRI image:
 
-- the original PyTorch checkpoint: `models/densenet121_brain_tumor.pth`
-- the mobile-compatible TorchScript Lite model: `models/brain_tumor_final_universal.ptl`
+- `models/densenet121_brain_tumor.pth`
+- `models/brain_tumor_final_universal.ptl`
 
 ## Repository Structure
 
@@ -25,10 +25,12 @@ Brain_tu/
 │   └── requirements-api.txt
 ├── frontend/
 ├── models/
-├── venv/
+├── requirements.txt
 ├── LICENSE
 └── README.md
 ```
+
+`venv/` is not part of the repository and should be created locally after cloning.
 
 ## Requirements
 
@@ -36,31 +38,38 @@ Brain_tu/
 - Node.js 20+
 - npm
 
-The project already uses a local virtual environment in `venv/`.
-
-## Python Environment
+## Python Setup
 
 From the repository root:
 
 ```bash
-cd /media/tst_imperial/Projects/Brain_tumor/Brain_tu
+cd Brain_tu
+python3 -m venv venv
 source venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-Check that the virtual environment is active:
+If you only want the backend API dependencies, you can install:
 
 ```bash
-which python
-which pip
-python -c "import torch; print(torch.__version__)"
-```
-
-## Install Backend Dependencies
-
-```bash
-cd /media/tst_imperial/Projects/Brain_tumor/Brain_tu
-source venv/bin/activate
 python -m pip install -r Scripts/requirements-api.txt
+```
+
+## Run Local Inference
+
+Run the inference script on the default MRI image:
+
+```bash
+cd Brain_tu
+source venv/bin/activate
+python Scripts/infernce.py
+```
+
+Run it on a custom image:
+
+```bash
+python Scripts/infernce.py --image "/absolute/path/to/image.jpg"
 ```
 
 ## Run the Backend
@@ -68,7 +77,7 @@ python -m pip install -r Scripts/requirements-api.txt
 Start the FastAPI server from the repository root:
 
 ```bash
-cd /media/tst_imperial/Projects/Brain_tumor/Brain_tu
+cd Brain_tu
 source venv/bin/activate
 fastapi dev Scripts/api.py --host 0.0.0.0 --port 8000
 ```
@@ -89,7 +98,7 @@ fastapi run Scripts/api.py --host 0.0.0.0 --port 8000
 The frontend lives in `frontend/` and talks to the FastAPI backend.
 
 ```bash
-cd /media/tst_imperial/Projects/Brain_tumor/Brain_tu/frontend
+cd Brain_tu/frontend
 cp .env.example .env.local
 npm install
 npm run dev
@@ -113,46 +122,32 @@ You can change it in `frontend/.env.local`:
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 ```
 
-## Run Local Inference
-
-To run the local comparison script on the default MRI image:
-
-```bash
-cd /media/tst_imperial/Projects/Brain_tumor/Brain_tu
-source venv/bin/activate
-python Scripts/infernce.py
-```
-
-To test another image:
-
-```bash
-python Scripts/infernce.py --image "/absolute/path/to/image.jpg"
-```
-
 ## API Prediction Example
 
 Send an image directly to the backend with `curl`:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/predict" \
-  -F "file=@/media/tst_imperial/Projects/Brain_tumor/Brain_tu/Dataset/Challenging Datasets/Challenging Datasets/Blurred Dataset/Glioma/bilateral_glioma (1).jpg"
+  -F "file=@Dataset/Challenging Datasets/Challenging Datasets/Blurred Dataset/Glioma/bilateral_glioma (1).jpg"
 ```
+
+Run that command from the `Brain_tu/` root.
 
 ## Dataset
 
-The dataset is expected under:
+The project expects the dataset under:
 
 ```text
 Dataset/
 ```
 
-The repository includes a helper script:
+There is a helper script available:
 
 ```bash
 python Scripts/download.py
 ```
 
-If you download or replace the dataset manually, keep the existing directory layout expected by the notebooks and scripts.
+If you download or replace the dataset manually, keep the current directory layout expected by the notebooks and scripts.
 
 ## Notes
 
